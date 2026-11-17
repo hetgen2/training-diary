@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1c1e">
+<title>Дневник тренировок</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Дневник</h1>
+  <span id="date"></span>
+</header>
+
+<nav>
+  <button data-tab="today" class="on">Сегодня</button>
+  <button data-tab="progress">Прогресс</button>
+  <button data-tab="data">Данные</button>
+</nav>
+
+<main>
+  <section id="today">
+    <div id="today-type"></div>
+
+    <div class="seg">
+      <button type="button" data-kind="strength" class="on">Сила</button>
+      <button type="button" data-kind="time">Время</button>
+    </div>
+
+    <form id="form">
+      <input id="ex" list="exlist" placeholder="Упражнение" autocomplete="off" required>
+      <datalist id="exlist"></datalist>
+      <p id="hint"></p>
+
+      <div id="f-strength" class="row">
+        <input id="weight" type="number" inputmode="decimal" step="0.5" min="0" placeholder="Вес, кг">
+        <input id="reps" type="number" inputmode="numeric" min="1" placeholder="Повторы">
+      </div>
+
+      <div id="f-time" class="row" hidden>
+        <input id="mins" type="number" inputmode="numeric" min="0" placeholder="Мин">
+        <input id="secs" type="number" inputmode="decimal" step="0.1" min="0" placeholder="Сек">
+        <button type="button" id="timer">▶ 0.0</button>
+      </div>
+
+      <button class="primary">Записать подход</button>
+    </form>
+
+    <div id="list"></div>
+  </section>
+
+  <section id="progress" hidden>
+    <div class="seg">
+      <button type="button" data-view="days" class="on">По дням</button>
+      <button type="button" data-view="ex">По упражнениям</button>
+    </div>
+
+    <div id="v-days">
+      <div class="cal-head">
+        <button type="button" id="prev" aria-label="Предыдущий месяц">‹</button>
+        <strong id="month"></strong>
+        <button type="button" id="next" aria-label="Следующий месяц">›</button>
+      </div>
+      <div id="cal" class="cal"></div>
+      <div id="day"></div>
+    </div>
+
+    <div id="v-ex" hidden>
+      <select id="pex" aria-label="Упражнение"></select>
+      <div id="chart"></div>
+    </div>
+  </section>
+
+  <section id="data" hidden>
+    <p class="muted">Данные хранятся только на этом телефоне. Сохраняйте копию файлом.</p>
+    <button id="export" class="primary">Сохранить копию</button>
+    <label class="file">Загрузить копию<input id="import" type="file" accept="application/json"></label>
+    <button id="clear" class="danger">Удалить все данные</button>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
