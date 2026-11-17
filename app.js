@@ -11,6 +11,7 @@ const TYPES = { up: { full: 'Верх', short: 'В' }, down: { full: 'Низ', s
 const sets = load();
 const days = loadDays();
 let kind = 'strength';
+let showAll = false;                 // показывать упражнения всех типов дней
 let selDay = dayOf(Date.now());      // выбранный день в календаре
 let month = new Date();              // показанный месяц
 month.setDate(1);
@@ -91,6 +92,7 @@ function dayTypeControl(day) {
     b.onclick = () => {
       if (days[day] === key) delete days[day];
       else days[day] = key;
+      showAll = false;
       save();
       renderAll();
     };
@@ -127,11 +129,49 @@ function renderGroups(box, daySets) {
 
 function renderLists() {
   const names = exercises();
-  $('#exlist').replaceChildren(...names.map((n) => { const o = el('option'); o.value = n; return o; }));
   const sel = $('#pex');
   const current = sel.value;
   sel.replaceChildren(...names.map((n) => { const o = el('option', n); o.value = n; return o; }));
   if (names.includes(current)) sel.value = current;
+}
+
+// Упражнения для подсказок, самые частые первыми.
+// Берём только тот же вид (сила или время) и, если нужно, только дни того же типа, что и сегодня.
+function suggestions(onlyType) {
+  const type = days[dayOf(Date.now())];
+  const found = new Map();
+  for (const s of sets) {
+    if (s.kind !== kind) continue;
+    if (onlyType && days[dayOf(s.ts)] !== type) continue;
+    const k = norm(s.ex);
+    const item = found.get(k) || { name: s.ex, n: 0 };
+    item.name = s.ex;
+    item.n++;
+    found.set(k, item);
+  }
+  return [...found.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, 'ru'));
+}
+
+function renderChips() {
+  const box = $('#chips');
+  box.replaceChildren();
+  const type = days[dayOf(Date.now())];
+  const q = norm($('#ex').value);
+  const list = suggestions(Boolean(type) && !showAll).filter((x) => norm(x.name).includes(q));
+  for (const x of list) {
+    const b = el('button', x.name, 'chip');
+    b.type = 'button';
+    if (norm(x.name) === q) b.classList.add('on');
+    b.onclick = () => { $('#ex').value = x.name; onExercise(); };
+    box.append(b);
+  }
+  // кнопка переключения, если часть упражнений скрыта из-за типа дня
+  if (type && suggestions(false).length > suggestions(true).length) {
+    const more = el('button', showAll ? `Только ${TYPES[type].full.toLowerCase()}` : 'Все', 'chip more');
+    more.type = 'button';
+    more.onclick = () => { showAll = !showAll; renderChips(); };
+    box.append(more);
+  }
 }
 
 function renderToday() {
@@ -210,6 +250,7 @@ function renderEx() {
 function renderAll() {
   renderLists();
   renderToday();
+  renderChips();
   renderDays();
   renderEx();
 }
@@ -227,6 +268,7 @@ function setKind(k) {
   document.querySelectorAll('[data-kind]').forEach((b) => b.classList.toggle('on', b.dataset.kind === k));
   $('#f-strength').hidden = k !== 'strength';
   $('#f-time').hidden = k !== 'time';
+  renderChips();
 }
 
 // выбрали знакомое упражнение: показываем прошлый результат и подставляем вес
@@ -239,6 +281,7 @@ function onExercise() {
 }
 
 $('#ex').addEventListener('change', onExercise);
+$('#ex').addEventListener('input', renderChips);
 
 $('#form').addEventListener('submit', (e) => {
   e.preventDefault();

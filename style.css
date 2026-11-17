@@ -85,3 +85,8 @@ h2 { font: 700 21px/1.2 var(--serif); margin: 22px 0 10px; }
 .daytype button.on { background: var(--brass); border-color: var(--brass); font-weight: 600; }
 .day sup { position: absolute; top: 3px; right: 5px; font: 700 10px/1 var(--sans); color: var(--ink); }
 .day.sel sup { color: var(--surface); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font: inherit; font-size: 15px; color: var(--ink); }
+.chip.on { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.chip.more { background: none; border-style: dashed; color: var(--muted); }
