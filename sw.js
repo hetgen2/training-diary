@@ -1,5 +1,4 @@
-// Service worker: кладёт файлы приложения в кэш, чтобы оно открывалось без интернета.
-// Сначала берём свежие файлы из сети, а без интернета достаём их из кэша.
+
 const CACHE = 'trainlog-v2';
 const FILES = ['./', './index.html', './style.css', './app.js', './manifest.json', './icon-192.png', './icon-512.png'];
 

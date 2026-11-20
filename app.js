@@ -1,20 +1,15 @@
 'use strict';
 
-// ---------- Данные ----------
-// Один подход = объект:
-//   силовой:  { id, ts, ex, kind: 'strength', weight, reps }
-//   на время: { id, ts, ex, kind: 'time',     secs }   (время всегда хранится в секундах)
-// Тип дня хранится отдельно: { 'ГГГГ-ММ-ДД': 'up' | 'down' }
 const KEY = 'trainlog.sets.v1';
 const KEY_DAYS = 'trainlog.days.v1';
 const TYPES = { up: { full: 'Верх', short: 'В' }, down: { full: 'Низ', short: 'Н' } };
-const START_DELAY = 3;               // секунд до старта секундомера
+const START_DELAY = 3;              
 const sets = load();
 const days = loadDays();
 let kind = 'strength';
-let showAll = false;                 // показывать упражнения всех типов дней
-let selDay = dayOf(Date.now());      // выбранный день в календаре
-let month = new Date();              // показанный месяц
+let showAll = false;                 
+let selDay = dayOf(Date.now());      
+let month = new Date();              
 month.setDate(1);
 
 function load() {
@@ -33,10 +28,10 @@ function save() {
     localStorage.setItem(KEY_DAYS, JSON.stringify(days));
   } catch { alert('Не удалось сохранить данные.'); }
 }
-// в первой версии вид «на время» назывался static
+
 function fixKind(s) { if (s.kind === 'static') s.kind = 'time'; }
 
-// ---------- Помощники ----------
+
 const $ = (sel) => document.querySelector(sel);
 const norm = (s) => s.trim().toLowerCase();
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -81,7 +76,7 @@ function lastOf(name) {
   return null;
 }
 
-// ---------- Отрисовка ----------
+
 function fmtDuration(ms) {
   const min = Math.round(ms / 60000);
   if (min < 1) return 'меньше минуты';
@@ -89,14 +84,14 @@ function fmtDuration(ms) {
   return h ? `${h} ч ${min % 60} мин` : `${min} мин`;
 }
 
-// Время тренировки: от записи первого подхода до записи последнего
+
 function durationLine(daySets) {
   if (daySets.length < 2) return null;
   const times = daySets.map((s) => s.ts);
   return el('p', `Время тренировки: ${fmtDuration(Math.max(...times) - Math.min(...times))}`, 'total');
 }
 
-// Выбор типа дня: нажатие на выбранный вариант снимает отметку
+
 function dayTypeControl(day) {
   const box = el('div', undefined, 'daytype');
   box.append(el('span', 'День', 'muted'));
@@ -116,7 +111,7 @@ function dayTypeControl(day) {
   return box;
 }
 
-// Список подходов дня: упражнения в порядке, в котором вы их начали делать
+
 function renderGroups(box, daySets) {
   const groups = new Map();
   for (const s of daySets) {
@@ -150,8 +145,7 @@ function renderLists() {
   if (names.includes(current)) sel.value = current;
 }
 
-// Упражнения для подсказок, самые частые первыми.
-// Берём только тот же вид (сила или время) и, если нужно, только дни того же типа, что и сегодня.
+
 function suggestions(onlyType) {
   const type = days[dayOf(Date.now())];
   const found = new Map();
@@ -180,7 +174,7 @@ function renderChips() {
     b.onclick = () => { $('#ex').value = x.name; onExercise(); };
     box.append(b);
   }
-  // кнопка переключения, если часть упражнений скрыта из-за типа дня
+
   if (type && suggestions(false).length > suggestions(true).length) {
     const more = el('button', showAll ? `Только ${TYPES[type].full.toLowerCase()}` : 'Все', 'chip more');
     more.type = 'button';
@@ -245,7 +239,7 @@ function renderEx() {
   const name = $('#pex').value;
   if (!name) { box.append(el('p', 'Данных пока нет.', 'muted')); return; }
 
-  // лучший подход за каждый день
+
   const best = new Map();
   for (const s of sets.filter((x) => norm(x.ex) === norm(name))) {
     const score = s.kind === 'time' ? s.secs : (s.weight || s.reps);
@@ -278,7 +272,7 @@ function renderAll() {
   renderEx();
 }
 
-// ---------- Действия ----------
+
 function removeSet(id) {
   const i = sets.findIndex((s) => s.id === id);
   if (i >= 0) sets.splice(i, 1);
@@ -294,7 +288,7 @@ function setKind(k) {
   renderChips();
 }
 
-// выбрали знакомое упражнение: показываем прошлый результат и подставляем вес
+
 function onExercise() {
   const last = lastOf($('#ex').value);
   $('#hint').textContent = last ? `В прошлый раз: ${fmt(last)}` : '';
@@ -329,13 +323,13 @@ $('#form').addEventListener('submit', (e) => {
   onExercise();
 });
 
-// ---------- Секундомер с отложенным стартом ----------
+
 let t0 = 0;
-let tick = null;        // идёт секундомер
-let countdown = null;   // идёт обратный отсчёт перед стартом
+let tick = null;       
+let countdown = null;  
 let audio = null;
 
-// короткий сигнал, чтобы слышать отсчёт, когда телефон лежит на полу
+
 function beep(freq, ms) {
   try {
     audio = audio || new AudioContext();
@@ -356,7 +350,7 @@ function resetTimer() {
 }
 
 $('#timer').addEventListener('click', () => {
-  if (tick) {                                   // второе нажатие: стоп и подставить время
+  if (tick) {                                  
     const total = (Date.now() - t0) / 1000;
     const m = Math.floor(total / 60);
     $('#mins').value = m || '';
@@ -364,7 +358,7 @@ $('#timer').addEventListener('click', () => {
     resetTimer();
     return;
   }
-  if (countdown) { resetTimer(); return; }      // нажали во время отсчёта: отмена
+  if (countdown) { resetTimer(); return; }      
 
   let left = START_DELAY;
   $('#timer').textContent = `${left}…`;
@@ -385,7 +379,7 @@ $('#timer').addEventListener('click', () => {
   }, 1000);
 });
 
-// ---------- Вкладки и режимы ----------
+
 document.querySelectorAll('nav button').forEach((b) => {
   b.addEventListener('click', () => {
     document.querySelectorAll('nav button').forEach((x) => x.classList.toggle('on', x === b));
@@ -410,7 +404,7 @@ function shiftMonth(delta) {
 $('#prev').addEventListener('click', () => shiftMonth(-1));
 $('#next').addEventListener('click', () => shiftMonth(1));
 
-// ---------- Копия данных ----------
+
 $('#export').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify({ sets, days }, null, 2)], { type: 'application/json' });
   const a = el('a');
@@ -423,7 +417,7 @@ $('#export').addEventListener('click', () => {
 $('#import').addEventListener('change', async (e) => {
   try {
     const data = JSON.parse(await e.target.files[0].text());
-    // старые копии были просто списком подходов, новые: { sets, days }
+   
     const list = Array.isArray(data) ? data : data.sets;
     const dayTypes = Array.isArray(data) ? {} : (data.days || {});
     const ids = new Set(sets.map((s) => s.id));
@@ -453,7 +447,7 @@ $('#clear').addEventListener('click', () => {
   }
 });
 
-// ---------- Запуск ----------
+
 $('#date').textContent = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
 setKind('strength');
 renderAll();
