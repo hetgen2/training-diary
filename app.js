@@ -8,6 +8,7 @@
 const KEY = 'trainlog.sets.v1';
 const KEY_DAYS = 'trainlog.days.v1';
 const TYPES = { up: { full: 'Верх', short: 'В' }, down: { full: 'Низ', short: 'Н' } };
+const START_DELAY = 3;               // секунд до старта секундомера
 const sets = load();
 const days = loadDays();
 let kind = 'strength';
@@ -81,6 +82,20 @@ function lastOf(name) {
 }
 
 // ---------- Отрисовка ----------
+function fmtDuration(ms) {
+  const min = Math.round(ms / 60000);
+  if (min < 1) return 'меньше минуты';
+  const h = Math.floor(min / 60);
+  return h ? `${h} ч ${min % 60} мин` : `${min} мин`;
+}
+
+// Время тренировки: от записи первого подхода до записи последнего
+function durationLine(daySets) {
+  if (daySets.length < 2) return null;
+  const times = daySets.map((s) => s.ts);
+  return el('p', `Время тренировки: ${fmtDuration(Math.max(...times) - Math.min(...times))}`, 'total');
+}
+
 // Выбор типа дня: нажатие на выбранный вариант снимает отметку
 function dayTypeControl(day) {
   const box = el('div', undefined, 'daytype');
@@ -181,7 +196,11 @@ function renderToday() {
   box.replaceChildren();
   const list = sets.filter((s) => dayOf(s.ts) === today);
   if (!list.length) box.append(el('p', 'Сегодня подходов нет. Запишите первый.', 'muted'));
-  else renderGroups(box, list);
+  else {
+    const total = durationLine(list);
+    if (total) box.append(total);
+    renderGroups(box, list);
+  }
 }
 
 function renderDays() {
@@ -213,7 +232,11 @@ function renderDays() {
   box.replaceChildren(el('h2', longDay(selDay)), dayTypeControl(selDay));
   const list = sets.filter((s) => dayOf(s.ts) === selDay);
   if (!list.length) box.append(el('p', 'В этот день подходов нет.', 'muted'));
-  else renderGroups(box, list);
+  else {
+    const total = durationLine(list);
+    if (total) box.append(total);
+    renderGroups(box, list);
+  }
 }
 
 function renderEx() {
@@ -306,18 +329,34 @@ $('#form').addEventListener('submit', (e) => {
   onExercise();
 });
 
-// ---------- Секундомер ----------
+// ---------- Секундомер с отложенным стартом ----------
 let t0 = 0;
-let tick = null;
+let tick = null;        // идёт секундомер
+let countdown = null;   // идёт обратный отсчёт перед стартом
+let audio = null;
+
+// короткий сигнал, чтобы слышать отсчёт, когда телефон лежит на полу
+function beep(freq, ms) {
+  try {
+    audio = audio || new AudioContext();
+    const osc = audio.createOscillator();
+    osc.frequency.value = freq;
+    osc.connect(audio.destination);
+    osc.start();
+    osc.stop(audio.currentTime + ms / 1000);
+  } catch { /* звук недоступен, это не страшно */ }
+}
 
 function resetTimer() {
   clearInterval(tick);
+  clearInterval(countdown);
   tick = null;
+  countdown = null;
   $('#timer').textContent = '▶ 0.0';
 }
 
 $('#timer').addEventListener('click', () => {
-  if (tick) {
+  if (tick) {                                   // второе нажатие: стоп и подставить время
     const total = (Date.now() - t0) / 1000;
     const m = Math.floor(total / 60);
     $('#mins').value = m || '';
@@ -325,8 +364,25 @@ $('#timer').addEventListener('click', () => {
     resetTimer();
     return;
   }
-  t0 = Date.now();
-  tick = setInterval(() => { $('#timer').textContent = `■ ${((Date.now() - t0) / 1000).toFixed(1)}`; }, 100);
+  if (countdown) { resetTimer(); return; }      // нажали во время отсчёта: отмена
+
+  let left = START_DELAY;
+  $('#timer').textContent = `${left}…`;
+  beep(660, 120);
+  countdown = setInterval(() => {
+    left--;
+    if (left > 0) {
+      $('#timer').textContent = `${left}…`;
+      beep(660, 120);
+      return;
+    }
+    clearInterval(countdown);
+    countdown = null;
+    beep(880, 400);
+    if (navigator.vibrate) navigator.vibrate(300);
+    t0 = Date.now();
+    tick = setInterval(() => { $('#timer').textContent = `■ ${((Date.now() - t0) / 1000).toFixed(1)}`; }, 100);
+  }, 1000);
 });
 
 // ---------- Вкладки и режимы ----------

@@ -90,3 +90,5 @@ h2 { font: 700 21px/1.2 var(--serif); margin: 22px 0 10px; }
 .chip { padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font: inherit; font-size: 15px; color: var(--ink); }
 .chip.on { background: var(--ink); border-color: var(--ink); color: var(--surface); }
 .chip.more { background: none; border-style: dashed; color: var(--muted); }
+
+.total { margin: 0 0 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
