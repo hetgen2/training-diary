@@ -16,7 +16,7 @@
 HTML, CSS, JavaScript без фреймворков и библиотек; localStorage; Service Worker (офлайн-режим); Web App Manifest.
 
 ## Запуск
-
+https://hetgen2.github.io/training-diary/
 
 ## Идея дизайна
 Цифровой минимализм
